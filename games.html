@@ -389,10 +389,8 @@ function initGamesPage(){
         var trimmed = code.trim();
         var html;
         if(/^<!doctype html/i.test(trimmed) || /^<html[\s>]/i.test(trimmed)){
-          // the url served a full, self-contained page — preview it as-is
           html = code;
         } else {
-          // the url served a bare script — give it a canvas to draw into
           var safeCode = code.replace(/<\/script/gi, '<\\/script');
           html =
             '<!DOCTYPE html><html><head><meta charset="utf-8"><style>' +

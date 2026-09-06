@@ -247,25 +247,11 @@
             <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
     </button>
-
-    <!--
-        STEP 1: Load the libraries. Keep these as plain <script> tags. Do not turn
-        them into type="module" / imports. They put their API on the global object
-        (window.$scramjet, window.$scramjetController, window.EpoxyTransport), and
-        that only happens in a classic script.
-
-        scramjet/ and controller/ need to live at your site root. The service worker
-        loads scramjet.js and scramjet.wasm from /scramjet/ and the inject script
-        from /controller/, so keep those paths unless you also change the controller
-        config.
-    -->
     <script src="https://cdn.jsdelivr.net/gh/blockfreeubg/fluxv3@latest/scramjet/scramjet.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/blockfreeubg/fluxv3@latest/controller/controller.api.js"></script>
-    <!-- Epoxy is the network transport. Drop in a local copy if you don't want the CDN. -->
     <script src="https://cdn.jsdelivr.net/npm/@mercuryworkshop/epoxy-transport@3.0.1/dist/index.js"></script>
 
     <script>
-        // STEP 2: Pull the classes off the globals the scripts above set up.
         const { Controller } = $scramjetController;
         const { defaultConfig } = $scramjet;
         const EpoxyTransport = self.EpoxyTransport.default;
@@ -273,15 +259,6 @@
         const iframe = document.getElementById("browserFrame");
         const urlInput = document.getElementById("urlInput");
         const statusEl = document.getElementById("status");
-
-        // ---------------------------------------------------------------
-        // WISP SERVER POOL
-        // Add as many wisp endpoints here as you have access to. They are
-        // tried in order on startup, and if the active one drops mid-session
-        // the code below rotates to the next one automatically and keeps
-        // cycling through the list (wrapping back to the start) until one
-        // connects again.
-        // ---------------------------------------------------------------
         const WISP_SERVERS = [
             "wss://wisp.mercurywork.shop/",
             "wss://wisp.bromine.cc/",
@@ -291,9 +268,9 @@
 
         let scramjet = null;
         let frame = null;
-        let currentIndex = -1;      // index into WISP_SERVERS currently in use
-        let reconnecting = false;   // guards against overlapping reconnect attempts
-        let pendingUrl = null;      // last URL requested, replayed after a rotation
+        let currentIndex = -1;  
+        let reconnecting = false; 
+        let pendingUrl = null;      
 
         function setStatus(t, err = false) {
             statusEl.textContent = t;
@@ -304,8 +281,6 @@
             return u.startsWith("http") ? u : "https://" + u;
         }
 
-        // Try to bring up a transport on a single wisp URL, with a timeout
-        // so a server that's down doesn't hang init() forever.
         function connectTransport(wispUrl, timeoutMs = 6000) {
             return new Promise((resolve, reject) => {
                 const transport = new EpoxyTransport({ wisp: wispUrl });
@@ -333,8 +308,7 @@
             });
         }
 
-        // Walk the WISP_SERVERS list starting just after `startAfterIndex`,
-        // wrapping around, and return the first transport that connects.
+
         async function connectWithFailover(startAfterIndex = -1) {
             const count = WISP_SERVERS.length;
             let lastErr = null;
@@ -356,9 +330,6 @@
             throw lastErr || new Error("No wisp servers configured");
         }
 
-        // Tear down the current controller/frame and rebuild against the
-        // next available wisp server. Reuses whatever URL was last loaded
-        // so the user doesn't lose their place.
         async function rotateWispServer() {
             if (reconnecting) return;
             reconnecting = true;
@@ -395,15 +366,13 @@
             try {
                 setStatus("Initializing...");
 
-                // Wait for the service worker (registered at the bottom) to be active.
+
                 await navigator.serviceWorker.ready;
 
                 const serviceworker =
                     navigator.serviceWorker.controller ??
                     (await navigator.serviceWorker.ready).active;
 
-                // STEP 3/4: Connect a transport, trying each configured wisp
-                // server in turn until one succeeds.
                 const transport = await connectWithFailover(-1);
 
                 scramjet = new Controller({
@@ -414,7 +383,6 @@
 
                 await scramjet.wait();
 
-                // STEP 5: Bind a frame to the <iframe> and navigate it.
                 frame = scramjet.createFrame(iframe);
                 pendingUrl = "https://duckduckgo.com";
                 frame.go(pendingUrl);
@@ -426,7 +394,6 @@
             }
         }
 
-        // Navigate the iframe to whatever is typed in the URL bar.
         function go() {
             const url = norm(urlInput.value);
             urlInput.value = url;
@@ -449,15 +416,11 @@
             if (e.key === "Enter") go();
         });
 
-        // If the iframe itself throws or fails to load (a good proxy for
-        // "the current wisp server just died"), rotate to the next one.
         iframe.addEventListener("error", () => {
             console.warn("Iframe error, rotating wisp server");
             rotateWispServer();
         });
 
-        // Lightweight periodic health check: ping the active wisp server's
-        // websocket endpoint every 15s, and rotate if it's unreachable.
         setInterval(() => {
             if (reconnecting || currentIndex === -1) return;
             const wispUrl = WISP_SERVERS[currentIndex];
@@ -480,8 +443,6 @@
             }
         }, 15000);
 
-        // STEP 6: Register the service worker, then boot once it's ready.
-        // Service workers only run in a secure context: https:// or http://localhost.
         if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register("https://cdn.jsdelivr.net/gh/blockfreeubg/fluxv3@latest/sw.js").then(init);
         } else {

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>flux</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;600&display=swap" rel="stylesheet">
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background: #000;
+  }
+
+  #bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    padding: 0 1.5rem;
+  }
+
+  h1 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: clamp(3rem, 12vw, 9rem);
+    letter-spacing: -0.02em;
+    color: #ffffff;
+    text-align: center;
+    user-select: none;
+    line-height: 1;
+  }
+
+  .quote-box {
+    max-width: 640px;
+    min-height: 3.5em;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  blockquote {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 400;
+    font-size: clamp(0.95rem, 1.6vw, 1.25rem);
+    color: rgba(255, 255, 255, 0.85);
+    text-align: center;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+    opacity: 0;
+    transition: opacity 1s ease;
+  }
+
+  blockquote.visible {
+    opacity: 1;
+  }
+
+  blockquote cite {
+    display: block;
+    margin-top: 0.75rem;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 0.75em;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%, 0);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9rem;
+    padding: 0.6rem 3.2rem 0.25rem;
+    border-radius: 16px 16px 0 0;
+    background: rgba(10, 10, 10, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: none;
+    transition: transform 0.4s ease, opacity 0.4s ease;
+  }
+
+  .bottom-bar.hidden {
+    transform: translate(-50%, 140%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .bar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.75);
+    text-decoration: none;
+    transition: color 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+  }
+
+  .bar-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .bar-btn svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .bar-toggle {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    width: 38px;
+    height: 16px;
+    border: none;
+    border-radius: 999px 999px 0 0;
+    background: rgba(10, 10, 10, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: bottom 0.4s ease;
+  }
+
+  .bar-toggle.bar-visible {
+    bottom: 50px;
+  }
+
+  .bar-toggle svg {
+    width: 11px;
+    height: 11px;
+    stroke: rgba(255, 255, 255, 0.7);
+    transition: transform 0.4s ease;
+  }
+
+  .bar-toggle.bar-visible svg {
+    transform: rotate(180deg);
+  }
+</style>
+</head>
+<body>
+
+<div id="bg"></div>
+<div class="wrap">
+  <img src="https://cdn.jsdelivr.net/gh/blockfreeubg/fluxv3@latest/logo.png" alt="Flux Logo" style="max-width: 20%; height: auto;">
+  <div class="quote-box">
+    <blockquote id="quote"></blockquote>
+  </div>
+</div>
+
+<nav class="bottom-bar" id="bottomBar">
+  <a href="" class="bar-btn" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 11.5 12 4l9 7.5"></path>
+      <path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"></path>
+    </svg>
+  </a>
+  <a href="games.svg" class="bar-btn" aria-label="Games">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2.5" y="8" width="19" height="10" rx="4"></rect>
+      <line x1="7" y1="11" x2="7" y2="15"></line>
+      <line x1="5" y1="13" x2="9" y2="13"></line>
+      <circle cx="16" cy="11.5" r="0.9" fill="currentColor" stroke="none"></circle>
+      <circle cx="18.2" cy="14" r="0.9" fill="currentColor" stroke="none"></circle>
+    </svg>
+  </a>
+  <a href="browser.svg" class="bar-btn" aria-label="Browser">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="10.5" cy="10.5" r="6.5"></circle>
+      <line x1="15.2" y1="15.2" x2="20.5" y2="20.5"></line>
+    </svg>
+  </a>
+</nav>
+
+<button class="bar-toggle bar-visible" id="barToggle" aria-label="Toggle bottom bar">
+  <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="6 9 12 15 18 9"></polyline>
+  </svg>
+</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.cells.min.js"></script>
+<script>
+  VANTA.CELLS({
+    el: "#bg",
+    mouseControls: true,
+    touchControls: true,
+    gyroControls: false,
+    minHeight: 200.00,
+    minWidth: 200.00,
+    scale: 1.00,
+    color1: 0xaf8a00,
+    color2: 0xc5b91b,
+    size: 5.00,
+    speed: 2.00
+  })
+
+  const quotes = [
+    { text: "I would rather have my friend cry on my shoulder, than have to attend his funeral the next day", author: "Joe Bart" },
+    { text: "The 2 most important things in your life, are the day you are born, and the day you find out why, change the fuck*ing world.", author: "jynxi" },
+    { text: "the word impossible has the word impossible has the phrase 'I'm possible' in it", author: "qoute guy jr" },
+    { text: "be useless so no one can use you", author: "wise man" },
+    { text: "the only obstacle when you're failing is... you.", author: "duderucool" }
+  ];
+
+  const quoteEl = document.getElementById('quote');
+  let index = 0;
+
+  function renderQuote(i) {
+    const q = quotes[i];
+    quoteEl.classList.remove('visible');
+    setTimeout(() => {
+      quoteEl.innerHTML = `“${q.text}”<cite>${q.author}</cite>`;
+      quoteEl.classList.add('visible');
+    }, 600);
+  }
+
+  renderQuote(index);
+
+  setInterval(() => {
+    index = (index + 1) % quotes.length;
+    renderQuote(index);
+  }, 6000);
+
+  const bottomBar = document.getElementById('bottomBar');
+  const barToggle = document.getElementById('barToggle');
+
+  barToggle.addEventListener('click', () => {
+    const isHidden = bottomBar.classList.toggle('hidden');
+    barToggle.classList.toggle('bar-visible', !isHidden);
+  });
+</script>
+
+</body>
+</html>
